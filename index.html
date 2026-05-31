@@ -2156,6 +2156,23 @@
     cloneAfter.setAttribute('aria-hidden', 'true');
     mainEl.after(cloneAfter);
 
+    // 복제본의 SVG defs ID 충돌 방지 (gradient/filter 중복 제거)
+    [cloneBefore, cloneAfter].forEach((clone, ci) => {
+      clone.querySelectorAll('defs').forEach(d => {
+        const sfx = '_c' + ci;
+        d.querySelectorAll('[id]').forEach(el => {
+          const oldId = el.id;
+          const newId = oldId + sfx;
+          el.id = newId;
+          ['fill','filter','marker-end','marker-start'].forEach(attr => {
+            clone.querySelectorAll('[' + attr + '*="url(#' + oldId + ')"]').forEach(ref => {
+              ref.setAttribute(attr, ref.getAttribute(attr).replaceAll('url(#' + oldId + ')', 'url(#' + newId + ')'));
+            });
+          });
+        });
+      });
+    });
+
     // 초기 위치: 원본 main 상단(=상단 복제본 높이만큼 아래)으로 이동
     requestAnimationFrame(() => {
       window.scrollTo({ top: mainEl.offsetTop, behavior: 'instant' });
